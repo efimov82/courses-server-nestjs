@@ -1,5 +1,9 @@
-import { Controller, Get, Req, Post, Param, Body } from '@nestjs/common';
+import { Controller, Get, Req, Post, Param, Body, UsePipes, ValidationPipe } from '@nestjs/common';
 import { CoursesService } from '../services/courses.service';
+import { CreateCourseDto } from '../dto/createCourse.dto';
+import { ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import { ValidPipe } from './valid.pipe';
+// import { PropertyValidationPipe } from './propertyValidationPipe';
 
 @Controller('courses')
 export class CoursesController {
@@ -17,7 +21,14 @@ export class CoursesController {
   }
 
   @Post()
-  async create(@Body() data: any) {
-    return await this.courseService.create(data);
+  @ApiBearerAuth()
+  @ApiResponse({ status: 201, description: 'The Course has been successfully created.' })
+  @ApiResponse({ status: 403, description: 'Forbidden.' })
+  // ERROR and not work -> @UsePipes(new ValidationPipe()) // { transform: true, forbidUnknownValues: true }
+  async create(@Body() { authors, description, dateCreation, duration, youtubeId, topRated, title }: CreateCourseDto) {
+    // TODO find better solution
+    const payload = { authors, description, dateCreation, duration, youtubeId, topRated, title };
+
+    return await this.courseService.create(payload);
   }
 }

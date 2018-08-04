@@ -1,18 +1,38 @@
-// TODO  check how use it????
+import { ApiModelProperty } from "@nestjs/swagger";
+import { Transform } from "class-transformer";
+import { IsNumber } from "class-validator";
+// import { IsInt, IsString, IsNumber } from 'class-validator';
 
-// export class CreateCourseDto {
-//   readonly title2: String;
-//   readonly description: String;
-//   readonly authors: String;
-//   readonly slug: String;
-//   readonly dateCreation: Date;
-//   readonly ownerId: String;
+export class CreateCourseDto {
 
+  @ApiModelProperty()
+  readonly title: String;
 
-//   readonly duration: Number;
-//   // readonly title: String;
-//   readonly thumbnail: string;
-//   // thumbnailFile: FileInput;
-//   readonly youtubeId: String;
-//   readonly topRated: Boolean;
-// }
+  @ApiModelProperty()
+  readonly description: String;
+
+  @ApiModelProperty()
+  readonly authors?: String;
+
+  // @ApiModelProperty()
+  // readonly slug: String;
+
+  @ApiModelProperty()
+  readonly dateCreation: Date;
+
+  // @ApiModelProperty()
+  // readonly ownerId: String;
+
+  @ApiModelProperty()
+  // @IsNumber()
+  readonly duration: Number;
+
+  @ApiModelProperty()
+  readonly thumbnail?: string;
+  // thumbnailFile: FileInput;
+  @ApiModelProperty()
+  readonly youtubeId: String;
+
+  @ApiModelProperty()
+  readonly topRated: Boolean = false;
+}

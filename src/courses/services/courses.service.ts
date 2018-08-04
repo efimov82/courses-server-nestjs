@@ -1,15 +1,17 @@
 import { Injectable } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
 import { Model } from 'mongoose';
-import { CourseInterface } from "interfaces/course.interface";
-// import { CreateCourseDto } from "../dto";
+import { CourseInterface } from "../interfaces/course.interface";
+import { CreateCourseDto } from "../dto/createCourse.dto";
 
 @Injectable()
 export class CoursesService {
   constructor(@InjectModel('Course') private readonly courseModel: Model<CourseInterface>) { }
 
   // data: CreateCourseDto - in real don't matter 'any' or 'someDtoType'
-  async create(data: any): Promise<CourseInterface | Error> {
+  async create(data: CreateCourseDto): Promise<CourseInterface | Error> {
+    // let data2 = <CourseInterface>data;
+    // console.log(data2);
 
     const course = new this.courseModel(data);
 
