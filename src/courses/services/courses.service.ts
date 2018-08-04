@@ -3,24 +3,30 @@ import { InjectModel } from "@nestjs/mongoose";
 import { Model } from 'mongoose';
 import { CourseInterface } from "../interfaces/course.interface";
 import { CreateCourseDto } from "../dto/createCourse.dto";
+import * as fs from "fs";
 
 @Injectable()
 export class CoursesService {
   constructor(@InjectModel('Course') private readonly courseModel: Model<CourseInterface>) { }
 
-  // data: CreateCourseDto - in real don't matter 'any' or 'someDtoType'
   async create(data: CreateCourseDto): Promise<CourseInterface | Error> {
-    // let data2 = <CourseInterface>data;
-    // console.log(data2);
-
-    const course = new this.courseModel(data);
-
     try {
-      course.slug = await this.getUnicSlug();
-      await course.save();
+      const slug = await this.getUnicSlug();
+
+      if (data.thumbnailFile) {
+        data.thumbnail = await this.uploadFile(slug, data.thumbnailFile);
+        delete data.thumbnailFile;
+      }
+
+      const course = new this.courseModel(data);
+      course.slug = slug;
+      return await course.save();
 
     } catch (exception) {
+
       const errors = [];
+      console.log(exception);
+
       Object.keys(exception.errors).forEach(field => {
         errors.push(field);
       })
@@ -28,15 +34,39 @@ export class CoursesService {
       // TODO find way for return all errors to client
       return new Error(errors[0]);
     }
-
-    return course;
   }
 
-  async findAll(): Promise<CourseInterface[]> {
-    return await this.courseModel.find().exec();
+  async find(search: string = '', limit: Number = 10, offset: Number = 0): Promise<any> {
+    let query = null;
+    if (search) {
+      const regexp = new RegExp(search, 'i');
+      query = {
+        $or: [
+          { 'title': regexp },
+          { 'description': regexp }
+        ],
+      };
+    }
+
+    const items = await this.courseModel.find(query).limit(limit).skip(offset).exec();
+    const path = '/images/courses/';
+    items.forEach(item => {
+      item.thumbnail = path + (item.thumbnail ? item.thumbnail : 'default.png');
+    });
+    const res = {
+      items: items,
+      count: items.length,
+      all: items.length
+    };
+
+    return res;
   }
 
-  async findBySlug(slug): Promise<CourseInterface> {
+  public async delete(slug: String) {
+    return await this.courseModel.findOneAndDelete({ slug }).exec();
+  }
+
+  public async findBySlug(slug: String): Promise<CourseInterface> {
     return await this.courseModel.findOne({ slug }).exec();
   }
 
@@ -53,7 +83,11 @@ export class CoursesService {
     return slug;
   }
 
-  private generateSlug(slugLength = 8) {
+  /**
+   * @param slugLength Number
+   * @return String
+   */
+  private generateSlug(slugLength: Number = 8) {
     let res = "";
     var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
 
@@ -61,5 +95,31 @@ export class CoursesService {
       res += possible.charAt(Math.floor(Math.random() * possible.length));
 
     return res;
+  }
+
+  /**
+   * @param slug
+   * @param thumbnail UploadedFile{ fieldname: String,
+   *       originalname: String,
+   *       encoding: '7bit',
+   *       mimetype: 'image/png',
+   *       buffer: Buffer
+   *       size: Number }
+   *     }
+   */
+  private async uploadFile(slug: String, thumbnail: any) { // UploadedFile
+    const filename = slug + '.' + thumbnail['originalname'].slice(-3);
+    const buffer = <Buffer>thumbnail.buffer;
+
+    // TODO check Mimetype
+    await fs.writeFile(__dirname + '/../../../public/images/courses/'+filename, buffer, null, (error) => {
+      // TODO check error upload
+      if (error) {
+        console.log('Error copy uploaded file:' + error);
+        return '';
+      }
+    });
+
+    return filename;
   }
 }

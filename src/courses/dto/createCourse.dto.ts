@@ -1,6 +1,6 @@
 import { ApiModelProperty } from "@nestjs/swagger";
-import { Transform } from "class-transformer";
-import { IsNumber } from "class-validator";
+// import { Transform } from "class-transformer";
+// import { IsNumber } from "class-validator";
 // import { IsInt, IsString, IsNumber } from 'class-validator';
 
 export class CreateCourseDto {
@@ -12,26 +12,22 @@ export class CreateCourseDto {
   readonly description: String;
 
   @ApiModelProperty()
-  readonly authors?: String;
-
-  // @ApiModelProperty()
-  // readonly slug: String;
+  readonly authors?: String = '';
 
   @ApiModelProperty()
-  readonly dateCreation: Date;
-
-  // @ApiModelProperty()
-  // readonly ownerId: String;
+  readonly dateCreation: Date = new Date();
 
   @ApiModelProperty()
-  // @IsNumber()
-  readonly duration: Number;
+  readonly duration: Number = 0;
 
   @ApiModelProperty()
-  readonly thumbnail?: string;
-  // thumbnailFile: FileInput;
+  thumbnail?: string = '';
+
   @ApiModelProperty()
-  readonly youtubeId: String;
+  thumbnailFile?: any = null; // BinaryType? Blob?
+
+  @ApiModelProperty()
+  readonly youtubeId: String = '';
 
   @ApiModelProperty()
   readonly topRated: Boolean = false;
