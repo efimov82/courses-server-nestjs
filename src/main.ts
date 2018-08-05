@@ -9,7 +9,6 @@ import * as express from 'express';
 
 dotenv.config();
 const port = process.env.LISTEN_PORT || 3000;
-console.log(Boolean(process.env.DEVELOPMENT_MODE));
 
 const SwaggerOptions = new DocumentBuilder()
     .setTitle('Courses REST API')
@@ -34,7 +33,6 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, SwaggerOptions);
   SwaggerModule.setup('api', app, document);
 
-  
   if (process.env.DEVELOPMENT_MODE == 'true') { // Develop HTTP server
     await app.listen(port);
     console.log(`Server listining: http:${process.env.HOST_NAME}:${port}`);

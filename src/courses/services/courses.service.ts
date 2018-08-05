@@ -1,15 +1,17 @@
-import { Injectable } from "@nestjs/common";
-import { InjectModel } from "@nestjs/mongoose";
+import { InjectModel } from '@nestjs/mongoose';
+import { Injectable } from '@nestjs/common';
 import { Model } from 'mongoose';
-import { CourseInterface } from "../interfaces/course.interface";
-import { CreateCourseDto } from "../dto/createCourse.dto";
-import * as fs from "fs";
+import * as fs from 'fs';
+
+import { UserInterface } from './../../authenticate/interfaces';
+import { CourseInterface } from '../interfaces';
+import { CreateCourseDto } from '../dto/createCourse.dto';
 
 @Injectable()
 export class CoursesService {
   constructor(@InjectModel('Course') private readonly courseModel: Model<CourseInterface>) { }
 
-  async create(data: CreateCourseDto): Promise<CourseInterface | Error> {
+  async create(owner: UserInterface, data: CreateCourseDto): Promise<CourseInterface | Error> {
     try {
       const slug = await this.getUnicSlug();
 
@@ -20,6 +22,7 @@ export class CoursesService {
 
       const course = new this.courseModel(data);
       course.slug = slug;
+      course.ownerId = owner['_id'];
       return await course.save();
 
     } catch (exception) {
