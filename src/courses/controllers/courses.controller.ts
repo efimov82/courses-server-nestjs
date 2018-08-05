@@ -1,11 +1,12 @@
 import { Controller, Get, Req, Post, Param, Body, FileInterceptor,
-  UseInterceptors, UploadedFile, Delete, UseGuards
+  UseInterceptors, UploadedFile, Delete, UseGuards, HttpException, HttpStatus
 } from '@nestjs/common';
 import { ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 
 import { CoursesService } from '../services/courses.service';
 import { CreateCourseDto } from '../dto/createCourse.dto';
+import { UserInterface } from 'authenticate/interfaces';
 
 @Controller('courses')
 export class CoursesController {
@@ -55,8 +56,25 @@ export class CoursesController {
   @ApiBearerAuth()
   @ApiResponse({ status: 200, description: 'The Course has been successfully deleted.' })
   @ApiResponse({ status: 403, description: 'Forbidden.' })
-  async delete(@Param('slug') slug) {
-    //TODO  Check perrmitions
-    return await this.courseService.delete(slug);
+  async delete(@Req() request, @Param('slug') slug) {
+    const canDelte = await this.isUserOwner(request.user, slug);
+    if (canDelte === true) {
+      await this.courseService.delete(slug);
+      return 'Course deleted.';
+    } else {
+      throw new HttpException({
+        status: HttpStatus.FORBIDDEN,
+        error: 'Permission denied.',
+      }, 403);
+    }
+  }
+
+  protected async isUserOwner(user: UserInterface, slug: String): Promise<Boolean> {
+    const course = await this.courseService.findBySlug(slug);
+    if (course && course.ownerId == user['_id']) {
+      return true;
+    }
+
+    return false;
   }
 }
