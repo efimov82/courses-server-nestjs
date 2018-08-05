@@ -7,11 +7,16 @@ import { CoursesModule } from './courses/courses.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 
+import * as dotenv from 'dotenv';
+dotenv.config();
+
+const DB_HOST = process.env.DB_HOST;
+
 @Module({
   imports: [
     AuthModule,
     CoursesModule,
-    MongooseModule.forRoot('mongodb://localhost:27017/db_courses'),
+    MongooseModule.forRoot(DB_HOST),
   ],
   controllers: [
     AppController,

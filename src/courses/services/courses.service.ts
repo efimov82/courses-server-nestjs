@@ -9,6 +9,8 @@ import { CreateCourseDto } from '../dto/createCourse.dto';
 
 @Injectable()
 export class CoursesService {
+  pathToImages = '/images/courses/';
+
   constructor(@InjectModel('Course') private readonly courseModel: Model<CourseInterface>) { }
 
   async create(owner: UserInterface, data: CreateCourseDto): Promise<CourseInterface | Error> {
@@ -23,7 +25,10 @@ export class CoursesService {
       const course = new this.courseModel(data);
       course.slug = slug;
       course.ownerId = owner['_id'];
-      return await course.save();
+      await course.save();
+
+      course.thumbnail = this.getThumbmailPath(course.thumbnail);
+      return course;
 
     } catch (exception) {
 
@@ -52,9 +57,8 @@ export class CoursesService {
     }
 
     const items = await this.courseModel.find(query).limit(limit).skip(offset).exec();
-    const path = '/images/courses/';
     items.forEach(item => {
-      item.thumbnail = path + (item.thumbnail ? item.thumbnail : 'default.png');
+      item.thumbnail = this.getThumbmailPath(item.thumbnail);
     });
     const res = {
       items: items,
@@ -124,5 +128,9 @@ export class CoursesService {
     });
 
     return filename;
+  }
+
+  private getThumbmailPath(name: String): String {
+    return this.pathToImages + (name ? name : 'default.png');
   }
 }

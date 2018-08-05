@@ -56,9 +56,10 @@ export class CoursesController {
   @ApiBearerAuth()
   @ApiResponse({ status: 200, description: 'The Course has been successfully deleted.' })
   @ApiResponse({ status: 403, description: 'Forbidden.' })
-  async delete(@Req() request, @Param('slug') slug) {
-    const canDelte = await this.isUserOwner(request.user, slug);
-    if (canDelte === true) {
+  async delete(@Req() request, @Param('slug') slug)
+  {
+    const canDelete = await this.isUserOwner(request.user, slug);
+    if (canDelete === true) {
       await this.courseService.delete(slug);
       return 'Course deleted.';
     } else {
@@ -69,7 +70,8 @@ export class CoursesController {
     }
   }
 
-  protected async isUserOwner(user: UserInterface, slug: String): Promise<Boolean> {
+  protected async isUserOwner(user: UserInterface, slug: String): Promise<Boolean>
+  {
     const course = await this.courseService.findBySlug(slug);
     if (course && course.ownerId == user['_id']) {
       return true;
