@@ -1,5 +1,6 @@
+import { UpdateCourseDto } from './../dto/updateCourse.dto';
 import { Controller, Get, Req, Post, Param, Body, FileInterceptor,
-  UseInterceptors, UploadedFile, Delete, UseGuards, HttpException, HttpStatus
+  UseInterceptors, UploadedFile, Delete, UseGuards, HttpException, HttpStatus, Put, Query
 } from '@nestjs/common';
 import { ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
@@ -47,8 +48,40 @@ export class CoursesController {
       thumbnailFile
     };
 
-    const owner = request.user;
-    return await this.courseService.create(owner, payload);
+    payload['ownerId'] = request.user['_id'];
+
+    return await this.courseService.create(payload);
+  }
+
+  
+  @Put(':slug')
+  @UseGuards(AuthGuard('bearer'))
+  @UseInterceptors(FileInterceptor('thumbnail'))
+
+  @ApiBearerAuth()
+  @ApiResponse({ status: 200, description: 'The Course has been successfully updated.' })
+  @ApiResponse({ status: 403, description: 'Forbidden.' })
+  async update(@Param('slug') slug, @Req() request, @Body() {authors, description, dateCreation, duration, youtubeId, topRated, title}: UpdateCourseDto, @UploadedFile() thumbnailFile){
+    let payload = {
+      authors,
+      description,
+      dateCreation,
+      duration,
+      youtubeId,
+      topRated,
+      title,
+      thumbnailFile
+    };
+
+    const canEdit = await this.isUserOwner(request.user, slug);
+    if (canEdit === true) {
+      return await this.courseService.update(slug, payload);
+    } else {
+      throw new HttpException({
+        status: HttpStatus.FORBIDDEN,
+        error: 'Permission denied.',
+      }, 403);
+    }
   }
 
   @Delete(':slug')

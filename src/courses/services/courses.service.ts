@@ -13,7 +13,7 @@ export class CoursesService {
 
   constructor(@InjectModel('Course') private readonly courseModel: Model<CourseInterface>) { }
 
-  async create(owner: UserInterface, data: CreateCourseDto): Promise<CourseInterface | Error> {
+  async create(data: CreateCourseDto): Promise<CourseInterface | Error> {
     try {
       const slug = await this.getUnicSlug();
 
@@ -24,7 +24,6 @@ export class CoursesService {
 
       const course = new this.courseModel(data);
       course.slug = slug;
-      course.ownerId = owner['_id'];
       await course.save();
 
       course.thumbnail = this.getThumbmailPath(course.thumbnail);
@@ -42,6 +41,31 @@ export class CoursesService {
       // TODO find way for return all errors to client
       return new Error(errors[0]);
     }
+  }
+
+  async update(slug: String, data: CreateCourseDto): Promise<CourseInterface | Error> {
+    const course = await this.findBySlug(slug);
+    if (!course) {
+      return new Error('Course not found.');
+    }
+
+    if (data.thumbnailFile) {
+      course.thumbnail = await this.uploadFile(course.slug, data.thumbnailFile);
+      delete data.thumbnailFile;
+    }
+
+    // TODO find better way
+    course.authors = data.authors;
+    course.description = data.description;
+    course.duration = data.duration;
+    course.title = data.title;
+    course.youtubeId = data.youtubeId;
+    course.topRated = data.topRated;
+
+    await course.save();
+    course.thumbnail = this.getThumbmailPath(course.thumbnail);
+    
+    return course;
   }
 
   async find(search: string = '', limit: Number = 10, offset: Number = 0): Promise<any> {
