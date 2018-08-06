@@ -64,7 +64,7 @@ export class CoursesService {
 
     await course.save();
     course.thumbnail = this.getThumbmailPath(course.thumbnail);
-    
+
     return course;
   }
 

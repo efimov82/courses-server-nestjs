@@ -53,7 +53,7 @@ export class CoursesController {
     return await this.courseService.create(payload);
   }
 
-  
+
   @Put(':slug')
   @UseGuards(AuthGuard('bearer'))
   @UseInterceptors(FileInterceptor('thumbnail'))
@@ -94,7 +94,7 @@ export class CoursesController {
     const canDelete = await this.isUserOwner(request.user, slug);
     if (canDelete === true) {
       await this.courseService.delete(slug);
-      return 'Course deleted.';
+      return {result: 'deleted'};
     } else {
       throw new HttpException({
         status: HttpStatus.FORBIDDEN,
