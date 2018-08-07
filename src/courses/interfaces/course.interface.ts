@@ -14,6 +14,7 @@ export interface CourseInterface  extends Document {
   youtubeId: String,
   topRated: Boolean,
   ownerId: String,
-
+  owner: any,
+  
   save();
 }

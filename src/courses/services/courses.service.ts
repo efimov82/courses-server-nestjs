@@ -6,12 +6,16 @@ import * as fs from 'fs';
 import { UserInterface } from './../../authenticate/interfaces';
 import { CourseInterface } from '../interfaces';
 import { CreateCourseDto } from '../dto/createCourse.dto';
+import { isObject } from 'util';
 
 @Injectable()
 export class CoursesService {
   pathToImages = '/images/courses/';
 
-  constructor(@InjectModel('Course') private readonly courseModel: Model<CourseInterface>) { }
+  constructor(
+    @InjectModel('Course') private readonly courseModel: Model<CourseInterface>,
+    @InjectModel('User') private readonly userModel: Model<UserInterface>
+  ) { }
 
   async create(data: CreateCourseDto): Promise<CourseInterface | Error> {
     try {
@@ -68,29 +72,56 @@ export class CoursesService {
     return course;
   }
 
-  async find(search: string = '', limit: Number = 10, offset: Number = 0): Promise<any> {
-    let query = null;
-    if (search) {
-      const regexp = new RegExp(search, 'i');
-      query = {
-        $or: [
-          { 'title': regexp },
-          { 'description': regexp }
-        ],
-      };
-    }
+  async find(search: string = '', limit: Number = 10, skip: Number = 0): Promise<any> {
+    const query = this.createQuery(search);
+    const countAll = await this.courseModel.find(query).count().exec();
+    const courses = await this.courseModel.aggregate([
+      {
+        $lookup:{
+          from: 'users',
+          localField: 'ownerId',
+          foreignField: '_id',
+          as: 'owners'
+        }
+      },
+      {
+        $project:{
+          _id: 0,
+          slug: 1,
+          authors: 1,
+          dateCreation: 1,
+          description: 1,
+          duration: 1,
+          title: 1,
+          thumbnail: 1,
+          youtubeId: 1,
+          topRated: 1,
+          owners: {
+            _id: 1,
+            email: 1,
+            nickname: 1,
+          }
+        }
+      },
+      {
+        $match: query
+      },
+      { $skip: skip },
+      { $limit : limit }
 
-    const items = await this.courseModel.find(query).limit(limit).skip(offset).exec();
-    items.forEach(item => {
-      item.thumbnail = this.getThumbmailPath(item.thumbnail);
+    ])
+    .exec();
+
+    courses.forEach(course => {
+      course.thumbnail = this.getThumbmailPath(course.thumbnail);
+      course.owner = course.owners[0] || null;
+      delete course.owners;
     });
-    const res = {
-      items: items,
-      count: items.length,
-      all: items.length
-    };
 
-    return res;
+    return {
+      items: courses,
+      all: countAll
+    };
   }
 
   public async delete(slug: String) {
@@ -112,6 +143,20 @@ export class CoursesService {
       } while (true);
 
     return slug;
+  }
+
+  private createQuery(search: string): Object {
+    if (search == '') {
+      return {};
+    }
+
+    const regexp = new RegExp(search, 'i');
+    return {
+        $or: [
+          { 'title': regexp },
+          { 'description': regexp }
+        ]
+      }
   }
 
   /**
