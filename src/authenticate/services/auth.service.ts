@@ -46,7 +46,12 @@ export class AuthService {
   }
 
   protected async createToken(user: UserInterface): Promise<String> {
-    const data = <JwtPayload>{ email: user.email, nickname: user.nickname };
+    const data = <JwtPayload>{
+      id: user._id,
+      email: user.email,
+      nickname: user.nickname,
+      roles: user.roles
+    };
     const expiresIn = process.env.JWT_EXPIRES_IN || '1h';
 
     return jwt.sign(data, this.secret, { expiresIn });
