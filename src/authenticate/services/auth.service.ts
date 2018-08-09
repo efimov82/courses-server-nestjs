@@ -20,7 +20,8 @@ export class AuthService {
 
     try {
       if (bcrypt.compareSync(password, user.password)) {
-        return await this.createToken(user);
+        const token = await this.createToken(user);
+        return { user, token }
       } else {
         return false;
       }

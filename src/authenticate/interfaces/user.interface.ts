@@ -6,6 +6,6 @@ export interface UserInterface extends Document {
   readonly nickname: String,
   readonly email: String,
   readonly password: String,
-  // readonly roleId: Number,
-  readonly roles: String
+  readonly roles: String,
+  readonly avatar: String,
 }

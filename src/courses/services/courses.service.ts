@@ -96,6 +96,7 @@ export class CoursesService {
           thumbnail: 1,
           youtubeId: 1,
           topRated: 1,
+          ownerId: 1,
           owners: {
             _id: 1,
             email: 1,

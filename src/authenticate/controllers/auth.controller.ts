@@ -5,6 +5,8 @@ import { AuthService } from '../services/auth.service';
 
 @Controller('auth')
 export class AuthController {
+  pathToImages = '/images/avatars/';
+  defaultAvatar = 'default.png';
 
   constructor(private authService: AuthService) { }
 
@@ -15,11 +17,13 @@ export class AuthController {
     const email = request.body['email'];
     const password = request.body['password'];
 
-    const token = await this.authService.login(email, password);
-    if (token) {
+    const data = await this.authService.login(email, password);
+    if (data) {
       return {
         success: true,
-        token: "Bearer " + token,
+        nickname: data.user['nickname'],
+        avatar: this.pathToImages + ( data.user['avatar'] || this.defaultAvatar ),
+        token: "Bearer " + data.token,
       }
     } else {
       return {
