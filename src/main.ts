@@ -42,7 +42,7 @@ async function bootstrap() {
     const certificate = fs.readFileSync(process.env.SSL_PUBLIC_KEY, 'utf8');
 
     const credentials = { key: privateKey, cert: certificate };
-    https.createServer(credentials, server).listen(443, () => {
+    https.createServer(credentials, server).listen(port, () => {
       console.log(`Server listining: https:${process.env.HOST_NAME}:${port}`);
     });
   }

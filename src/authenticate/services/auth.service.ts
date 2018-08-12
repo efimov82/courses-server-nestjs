@@ -46,6 +46,21 @@ export class AuthService {
     }
   }
 
+  public async isPasswordValid(id: String = '',password: String): Promise<any> {
+    const user = await this.usersService.findOneById(id);
+
+    if (!user) {
+      return false;
+    }
+
+    try {
+      return bcrypt.compareSync(password, user.password);
+    } catch(exception) {
+      console.log('Exception: '+exception);
+      return false;
+    }
+  }
+
   protected async createToken(user: UserInterface): Promise<String> {
     const data = <JwtPayload>{
       id: user._id,

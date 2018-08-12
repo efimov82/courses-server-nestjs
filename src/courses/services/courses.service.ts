@@ -36,7 +36,6 @@ export class CoursesService {
     } catch (exception) {
 
       const errors = [];
-      console.log(exception);
 
       Object.keys(exception.errors).forEach(field => {
         errors.push(field);

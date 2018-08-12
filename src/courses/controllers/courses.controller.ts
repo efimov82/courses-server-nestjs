@@ -1,6 +1,6 @@
 import { UpdateCourseDto } from './../dto/updateCourse.dto';
 import { Controller, Get, Req, Post, Param, Body, FileInterceptor,
-  UseInterceptors, UploadedFile, Delete, UseGuards, HttpException, HttpStatus, Put, Query
+  UseInterceptors, UploadedFile, Delete, UseGuards, HttpException, HttpStatus, Put
 } from '@nestjs/common';
 import { ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
@@ -36,7 +36,6 @@ export class CoursesController {
   // ERROR and not work -> @UsePipes(new ValidationPipe()) // { transform: true, forbidUnknownValues: true }
   @UseInterceptors(FileInterceptor('thumbnail'))
   async create(@Req() request, @UploadedFile() thumbnailFile, @Body() { authors, description, dateCreation, duration, youtubeId, topRated, title }: CreateCourseDto) {
-    // TODO find better solution control input params
     let payload = {
       authors,
       description,
@@ -106,7 +105,7 @@ export class CoursesController {
   protected async isUserOwner(user: UserInterface, slug: String): Promise<Boolean>
   {
     const course = await this.courseService.findBySlug(slug);
-    if (course && course.ownerId == user['_id']) {
+    if (course && (course.ownerId.toString() == user['_id'.toString()])) {
       return true;
     }
 

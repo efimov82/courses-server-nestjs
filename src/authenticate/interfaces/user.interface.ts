@@ -3,9 +3,12 @@ import { Document } from 'mongoose';
 export interface UserInterface extends Document {
   readonly _id: String,
   readonly slug: String,
-  readonly nickname: String,
-  readonly email: String,
-  readonly password: String,
-  readonly roles: String,
-  readonly avatar: String,
+
+  avatar: String,
+  email: String,
+  password: String,
+  roles: String,
+  nickname: String,
+
+  save();
 }
