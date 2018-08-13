@@ -12,7 +12,10 @@
     "sourceMap": false,
     "allowJs": true,
     "outDir": "./dist",
-    "baseUrl": "./src"
+    "baseUrl": "./src",
+    "paths": {
+      "@src/*": ["src/*"]
+    }
   },
   "include": [
     "src/**/*"

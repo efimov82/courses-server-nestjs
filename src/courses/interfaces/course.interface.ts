@@ -15,6 +15,6 @@ export interface CourseInterface  extends Document {
   topRated: Boolean,
   ownerId: String,
   owner: any,
-  
+
   save();
 }

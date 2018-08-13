@@ -1,13 +1,15 @@
-import { UpdateCourseDto } from './../dto/updateCourse.dto';
 import { Controller, Get, Req, Post, Param, Body, FileInterceptor,
   UseInterceptors, UploadedFile, Delete, UseGuards, HttpException, HttpStatus, Put
 } from '@nestjs/common';
 import { ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 
-import { CoursesService } from '../services/courses.service';
-import { CreateCourseDto } from '../dto/createCourse.dto';
+import { ACTIONS, can } from 'authenticate/permissions/acl.fn';
 import { UserInterface } from 'authenticate/interfaces';
+
+import { CoursesService } from '../services/courses.service';
+import { CreateCourseDto, UpdateCourseDto } from '../dto';
+
 
 @Controller('courses')
 export class CoursesController {
@@ -47,9 +49,7 @@ export class CoursesController {
       thumbnailFile
     };
 
-    payload['ownerId'] = request.user['_id'];
-
-    return await this.courseService.create(payload);
+    return await this.courseService.create(payload, request.user);
   }
 
 
@@ -72,7 +72,7 @@ export class CoursesController {
       thumbnailFile
     };
 
-    const canEdit = await this.isUserOwner(request.user, slug);
+    const canEdit = await this.canDo(request.user, slug, ACTIONS.Edit);
     if (canEdit === true) {
       return await this.courseService.update(slug, payload);
     } else {
@@ -90,7 +90,7 @@ export class CoursesController {
   @ApiResponse({ status: 403, description: 'Forbidden.' })
   async delete(@Req() request, @Param('slug') slug)
   {
-    const canDelete = await this.isUserOwner(request.user, slug);
+    const canDelete = await this.canDo(request.user, slug, ACTIONS.Delete);
     if (canDelete === true) {
       await this.courseService.delete(slug);
       return {result: 'deleted'};
@@ -102,10 +102,16 @@ export class CoursesController {
     }
   }
 
+  protected async canDo(user: UserInterface, slug: String, action: ACTIONS): Promise<Boolean> {
+    const course = await this.courseService.findBySlug(slug);
+
+    return can(user, 'Course', action, course);
+  }
+
   protected async isUserOwner(user: UserInterface, slug: String): Promise<Boolean>
   {
     const course = await this.courseService.findBySlug(slug);
-    if (course && (course.ownerId.toString() == user['_id'.toString()])) {
+    if (course && (course.ownerId.toString() == user['_id'].toString())) {
       return true;
     }
 

@@ -17,7 +17,7 @@ export class CoursesService {
     @InjectModel('User') private readonly userModel: Model<UserInterface>
   ) { }
 
-  async create(data: CreateCourseDto): Promise<CourseInterface | Error> {
+  async create(data: CreateCourseDto, owner: UserInterface): Promise<CourseInterface | Error> {
     try {
       const slug = await this.getUnicSlug();
 
@@ -28,10 +28,13 @@ export class CoursesService {
 
       const course = new this.courseModel(data);
       course.slug = slug;
+      course.ownerId = owner._id;
       await course.save();
 
-      course.thumbnail = this.getThumbmailPath(course.thumbnail);
-      return course;
+      // course.thumbnail = this.getThumbmailPath(course.thumbnail);
+      // not set value -> course.owner = {_id: owner._id, email: owner.email, nickname: owner.nickname};
+      const res = this.findBySlug(slug);
+      return res;
 
     } catch (exception) {
 
@@ -71,10 +74,41 @@ export class CoursesService {
     return course;
   }
 
-  async find(search: string = '', limit: Number = 10, skip: Number = 0): Promise<any> {
+  async find(search: string = '', limit: number = 10, skip: number = 0): Promise<any> {
     const query = this.createQuery(search);
     const countAll = await this.courseModel.find(query).count().exec();
-    const courses = await this.courseModel.aggregate([
+    const courses = await this.courseModel
+      .aggregate(this.createAggregate(query, skip, limit))
+      .exec();
+
+    courses.forEach(course => {
+      this.prepareForResponce(course);
+    });
+
+    return {
+      items: courses,
+      all: countAll
+    };
+  }
+
+  public async delete(slug: String) {
+    return await this.courseModel.findOneAndDelete({ slug }).exec();
+  }
+
+  public async findBySlug(slug: String): Promise<CourseInterface> {
+    const courses = await this.courseModel
+      .aggregate(this.createAggregate({slug: slug }, 0, 1))
+      .exec();
+
+    if (courses[0]) {
+      return this.prepareForResponce(courses[0]);
+    }
+
+    return null;
+  }
+
+  private createAggregate(query = {}, skip = 0, limit = 1) {
+    return [
       {
         $lookup:{
           from: 'users',
@@ -109,30 +143,18 @@ export class CoursesService {
       { $skip: skip },
       { $limit : limit }
 
-    ])
-    .exec();
-
-    courses.forEach(course => {
-      course.thumbnail = this.getThumbmailPath(course.thumbnail);
-      course.owner = course.owners[0] || null;
-      delete course.owners;
-    });
-
-    return {
-      items: courses,
-      all: countAll
-    };
+    ];
   }
 
-  public async delete(slug: String) {
-    return await this.courseModel.findOneAndDelete({ slug }).exec();
+  private prepareForResponce(course: any) {
+    course.thumbnail = this.getThumbmailPath(course.thumbnail);
+    course.owner = course.owners[0] || null;
+    delete course.owners;
+
+    return course;
   }
 
-  public async findBySlug(slug: String): Promise<CourseInterface> {
-    return await this.courseModel.findOne({ slug }).exec();
-  }
-
-  private async getUnicSlug() {
+  private async getUnicSlug(): Promise<string> {
     let slug = '';
       do {
         slug = this.generateSlug();
@@ -163,7 +185,7 @@ export class CoursesService {
    * @param slugLength Number
    * @return String
    */
-  private generateSlug(slugLength: Number = 8) {
+  private generateSlug(slugLength: Number = 8): string {
     let res = "";
     var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
 
